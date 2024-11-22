@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tic Tac Toe</title>
+<style>
+    body {
+      background-color: #222;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      font-family: 'Arial', sans-serif;
+    }
+
+    .container {
+      text-align: center;
+    }
+
+    h1 {
+      color: white;
+      text-shadow: 0 0 15px white;
+      animation: glowing-title 1.5s ease-in-out infinite alternate;
+      font-size: 2.5em;
+      letter-spacing: 3px;
+      margin-bottom: 20px;
+    }
+
+    /* Professional button styles */
+    button {
+      margin-top: 20px;
+      padding: 12px 25px;
+      font-size: 1.1em;
+      color: #fff;
+      background: linear-gradient(135deg, #444, #666);
+      border: 1px solid #fff;
+      cursor: pointer;
+      transition: all 0.3s ease-in-out;
+      border-radius: 30px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      outline: none;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+
+    button:hover {
+      background: linear-gradient(135deg, #666, #888);
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    button:active {
+      transform: translateY(0px) scale(1);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    /* More button customization */
+    button:focus {
+      outline: none;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-gap: 5px;
+      margin: 20px auto;
+    }
+
+    .cell {
+      width: 100px;
+      height: 100px;
+      border: 2px solid white;
+      font-size: 2.5em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease-in-out;
+      color: white;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+    }
+
+    .cell:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+    }
+
+    .glowing-x {
+      color: red;
+      text-shadow: 0 0 20px red;
+      animation: glowing-x 1s ease-in-out infinite alternate;
+    }
+
+    .glowing-o {
+      color: blue;
+      text-shadow: 0 0 20px blue;
+      animation: glowing-o 1s ease-in-out infinite alternate;
+    }
+
+    #winnerBox {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: rgba(0, 0, 0, 0.9);
+      color: white;
+      padding: 20px;
+      border: 2px solid white;
+      border-radius: 10px;
+      text-align: center;
+      font-size: 1.5em;
+      box-shadow: 0 0 30px rgba(255, 255, 255, 0.6);
+    }
+
+    #tournamentStats {
+      display: none;
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      background-color: rgba(255, 255, 255, 0.1);
+      color: white;
+      padding: 10px 20px;
+      border: 2px solid white;
+      border-radius: 10px;
+      font-size: 1.1em;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
+    }
+
+    /* Glowing and animation effects */
+    @keyframes glowing-x {
+      0% {
+        text-shadow: 0 0 10px red;
+      }
+      100% {
+        text-shadow: 0 0 25px red;
+      }
+    }
+
+    @keyframes glowing-o {
+      0% {
+        text-shadow: 0 0 10px blue;
+      }
+      100% {
+        text-shadow: 0 0 25px blue;
+      }
+    }
+
+    @keyframes glowing-title {
+      0% {
+        text-shadow: 0 0 15px white;
+      }
+      100% {
+        text-shadow: 0 0 30px white;
+      }
+    }
+
+    @keyframes glowing-winner {
+      0% {
+        text-shadow: 0 0 10px yellow;
+      }
+      100% {
+        text-shadow: 0 0 30px yellow;
+      }
+    }
+
+    .winner-highlight {
+      animation: glowing-winner 1.5s ease-in-out infinite alternate;
+    }
+</style>
+
+</head>
+<body>
+  <div id="winnerBox"></div>
+  <div id="tournamentStats"></div>
+  <div class="container">
+    <h1>Tic Tac Toe</h1>
+    <div id="modeSelection">
+      <button onclick="startSinglePlayer()">Single Player</button>
+      <button onclick="startMultiPlayer()">Multiplayer</button>
+      <button onclick="startTournament()">Tournament</button>
+    </div>
+    <div id="board" class="board" style="display: none;">
+      <div class="cell" onclick="playerMove(0)"></div>
+      <div class="cell" onclick="playerMove(1)"></div>
+      <div class="cell" onclick="playerMove(2)"></div>
+      <div class="cell" onclick="playerMove(3)"></div>
+      <div class="cell" onclick="playerMove(4)"></div>
+      <div class="cell" onclick="playerMove(5)"></div>
+      <div class="cell" onclick="playerMove(6)"></div>
+      <div class="cell" onclick="playerMove(7)"></div>
+      <div class="cell" onclick="playerMove(8)"></div>
+    </div>
+    <button id="restartBtn" onclick="restart()" style="display: none;">Restart</button>
+    <p id="message"></p>
+  </div>
+  <script>
+    let singlePlayerMode = false;
+    let tournamentMode = false;
+    let currentPlayer = 'X';
+    let xPlayerScore = 0;
+    let oPlayerScore = 0;
+    let board = ['', '', '', '', '', '', '', '', ''];
+    const winningCombinations = [
+      [0, 1, 2],
+      [3, 4, 5],
+      [6, 7, 8],
+      [0, 3, 6],
+      [1, 4, 7],
+      [2, 5, 8],
+      [0, 4, 8],
+      [2, 4, 6]
+    ];
+
+    const cells = document.querySelectorAll('.cell');
+    const message = document.getElementById('message');
+    const modeSelection = document.getElementById('modeSelection');
+    const boardElement = document.getElementById('board');
+    const restartButton = document.getElementById('restartBtn');
+    const winnerBox = document.getElementById('winnerBox');
+    const tournamentStats = document.getElementById('tournamentStats');
+
+    function startSinglePlayer() {
+      singlePlayerMode = true;
+      tournamentMode = false;
+      modeSelection.style.display = 'none';
+      boardElement.style.display = 'grid';
+      restartButton.style.display = 'block';
+      tournamentStats.style.display = 'none';
+      initializeGame();
+    }
+
+    function startMultiPlayer() {
+      singlePlayerMode = false;
+      tournamentMode = false;
+      modeSelection.style.display = 'none';
+      boardElement.style.display = 'grid';
+      restartButton.style.display = 'block';
+      tournamentStats.style.display = 'none';
+      initializeGame();
+    }
+
+    function startTournament() {
+      singlePlayerMode = false;
+      tournamentMode = true;
+      modeSelection.style.display = 'none';
+      boardElement.style.display = 'grid';
+      restartButton.style.display = 'block';
+      tournamentStats.style.display = 'block';
+      initializeTournament();
+    }
+
+    function initializeGame() {
+      document.body.style.backgroundColor = '#333';
+      currentPlayer = 'X';
+      board = ['', '', '', '', '', '', '', '', ''];
+      message.innerText = `${currentPlayer}'s turn`;
+      cells.forEach(cell => {
+        cell.innerText = '';
+        cell.classList.remove('glowing-x', 'glowing-o');
+        cell.onclick = () => playerMove(Array.from(cells).indexOf(cell));
+      });
+    }
+
+    function initializeTournament() {
+      xPlayerScore = 0;
+      oPlayerScore = 0;
+      updateTournamentStats();
+      initializeGame();
+    }
+
+    function playerMove(cellIndex) {
+      if (!board[cellIndex]) {
+        board[cellIndex] = currentPlayer;
+        cells[cellIndex].innerText = currentPlayer;
+        cells[cellIndex].classList.add(`glowing-${currentPlayer.toLowerCase()}`);
+        if (checkWin()) {
+          message.innerText = `${currentPlayer} wins!`;
+          if (tournamentMode) {
+            if (currentPlayer === 'X') {
+              xPlayerScore++;
+            } else {
+              oPlayerScore++;
+            }
+            updateTournamentStats();
+            if (xPlayerScore === 5 || oPlayerScore === 5) {
+              showWinner(currentPlayer);
+              initializeTournament();
+            } else {
+              setTimeout(() => {
+                initializeGame();
+              }, 1500); // Delay before starting the next round in the tournament
+            }
+          } else {
+            showWinner(currentPlayer);
+          }
+          disableBoard();
+        } else if (checkDraw()) {
+          message.innerText = 'It\'s a draw!';
+          showWinner('Draw');
+          if (tournamentMode) {
+            updateTournamentStats();
+            setTimeout(() => {
+              initializeGame();
+            }, 1500); // Delay before starting the next round in the tournament
+          }
+        } else {
+          currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+          message.innerText = `${currentPlayer}'s turn`;
+          if (singlePlayerMode && currentPlayer === 'O') {
+            setTimeout(computerMove, 500);
+          }
+        }
+      }
+    }
+
+    function computerMove() {
+      const emptyCells = board.reduce((acc, cell, index) => {
+        if (cell === '') {
+          acc.push(index);
+        }
+        return acc;
+      }, []);
+      const randomIndex = Math.floor(Math.random() * emptyCells.length);
+      const cellIndex = emptyCells[randomIndex];
+      playerMove(cellIndex);
+    }
+
+    function checkWin() {
+      return winningCombinations.some(combination => {
+        return combination.every(index => {
+          return board[index] === currentPlayer;
+        });
+      });
+    }
+
+    function checkDraw() {
+      return board.every(cell => cell !== '');
+    }
+
+    function disableBoard() {
+      cells.forEach(cell => {
+        cell.onclick = null;
+      });
+    }
+
+    function restart() {
+      modeSelection.style.display = 'block';
+      boardElement.style.display = 'none';
+      restartButton.style.display = 'none';
+      winnerBox.style.display = 'none';
+      tournamentStats.style.display = 'none';
+      initializeGame();
+    }
+
+    function showWinner(winner) {
+      let winnerText = '';
+      if (winner === 'Draw') {
+        winnerText = 'It\'s a draw!';
+      } else if (tournamentMode && (xPlayerScore === 5 || oPlayerScore === 5)) {
+        winnerText = `${winner} wins the tournament!`;
+      } else {
+        winnerText = `${winner} wins!`;
+      }
+      winnerBox.innerText = winnerText;
+      winnerBox.style.display = 'block';
+    }
+
+    function updateTournamentStats() {
+      tournamentStats.innerHTML = `
+        <p>X Player: ${xPlayerScore} points</p>
+        <p>O Player: ${oPlayerScore} points</p>
+      `;
+    }
+  </script>
+</body>
+</html>
