@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stylish Calendar with Search</title>
+<style>
+  /* General Styling */
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Arial', sans-serif;
+    background-color: #1a1a2e;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    height: 100vh;
+    padding: 20px;
+    overflow: hidden;
+  }
+
+  .current-date {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    font-size: 60px;
+    color: #4f8cff;
+    font-weight: bold;
+    text-shadow: 0 0 40px #4f8cff;
+    margin-top: 60px
+  }
+
+  .search-bar {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    gap: 10px;
+  }
+
+  .search-bar input {
+    padding: 8px;
+    border: 2px solid #4f8cff;
+    border-radius: 5px;
+    background-color: #162447;
+    color: #4f8cff;
+    font-size: 1rem;
+    outline: none;
+    transition: 0.3s;
+  }
+
+  .search-bar input:focus {
+    border-color: #ffab5c;
+    box-shadow: 0 0 10px #ffab5c;
+  }
+
+  .search-bar button {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    background-color: #4f8cff;
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.3s;
+  }
+
+  .search-bar button:hover {
+    background-color: #1f4068;
+    transform: scale(1.1);
+  }
+
+  .search-results {
+    color: #ffab5c;
+    text-align: center;
+    font-size: 1.2rem;
+    margin-top: 20px;
+    transition: opacity 0.3s;
+  }
+
+  .calendar {
+    width: 90%;
+    max-width: 400px;
+    background: #162447;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+    text-align: center;
+    margin-top: 200px;
+    transition: transform 0.3s ease-in-out;
+  }
+
+  .calendar:hover {
+    transform: scale(1.05);
+  }
+
+  .calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 10px;
+    color: #4f8cff;
+  }
+
+  .calendar-header h2 {
+    font-size: 1.3rem;
+  }
+
+  .calendar-header button {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #4f8cff;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+
+  .calendar-header button:hover {
+    color: #ffab5c;
+  }
+
+  .day-names, .days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+    margin-top: 10px;
+  }
+
+  .day-name, .day {
+    padding: 10px 0;
+    font-weight: bold;
+    color: #c7c7d6;
+  }
+
+  .day-name {
+    color: #4f8cff;
+  }
+
+  .day:hover {
+    background-color: #4f8cff;
+    color: white;
+    border-radius: 50%;
+    box-shadow: 0 0 15px #4f8cff;
+    transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
+  }
+
+  .day.active {
+    background-color: #ffab5c;
+    color: white;
+    border-radius: 50%;
+    box-shadow: 0 0 15px #ffab5c;
+  }
+
+  .day.selected {
+    background-color: #ffab5c;
+    color: white;
+    border-radius: 50%;
+    box-shadow: 0 0 20px #ffab5c;
+  }
+
+  .difference-output {
+    margin-top: 20px;
+    color: #4f8cff;
+    font-size: 1rem;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<div class="current-date" id="currentDateDisplay"></div>
+
+<div class="search-bar">
+  <input type="date" id="searchDate" placeholder="Select a date">
+  <button onclick="searchDate()">Search</button>
+</div>
+
+<div class="search-results" id="searchResults"></div>
+
+<div class="calendar">
+  <div class="calendar-header">
+    <button onclick="prevMonth()">&#9664;</button>
+    <h2 id="monthYear"></h2>
+    <button onclick="nextMonth()">&#9654;</button>
+  </div>
+  <div class="day-names">
+    <div class="day-name">Sun</div>
+    <div class="day-name">Mon</div>
+    <div class="day-name">Tue</div>
+    <div class="day-name">Wed</div>
+    <div class="day-name">Thu</div>
+    <div class="day-name">Fri</div>
+    <div class="day-name">Sat</div>
+  </div>
+  <div class="days" id="calendarDays"></div>
+</div>
+
+<div class="difference-output" id="differenceOutput"></div>
+
+<script>
+  const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  let date = new Date();
+
+  function renderCalendar() {
+    const month = date.getMonth();
+    const year = date.getFullYear();
+    const firstDay = new Date(year, month, 1).getDay();
+    const lastDate = new Date(year, month + 1, 0).getDate();
+
+    document.getElementById("monthYear").innerText = monthNames[month] + " " + year;
+    document.getElementById("calendarDays").innerHTML = "";
+
+    for (let i = 0; i < firstDay; i++) {
+      document.getElementById("calendarDays").innerHTML += `<div class="day"></div>`;
+    }
+
+    for (let i = 1; i <= lastDate; i++) {
+      const currentDate = `${year}-${String(month + 1).padStart(2, "0")}-${String(i).padStart(2, "0")}`;
+      const isToday = (i === date.getDate() && month === new Date().getMonth() && year === new Date().getFullYear());
+      const dayClass = isToday ? "active" : "";
+      document.getElementById("calendarDays").innerHTML += `<div class="day ${dayClass}" data-day="${i}" onclick="selectDay('${currentDate}', ${i})">${i}</div>`;
+    }
+  }
+
+  function prevMonth() {
+    date.setMonth(date.getMonth() - 1);
+    renderCalendar();
+  }
+
+  function nextMonth() {
+    date.setMonth(date.getMonth() + 1);
+    renderCalendar();
+  }
+
+  function displayCurrentDate() {
+    const currentDate = new Date();
+    document.getElementById("currentDateDisplay").innerText = `Current Date: ${currentDate.toDateString()}`;
+  }
+
+  function selectDay(dateStr, day) {
+    const selectedDays = document.querySelectorAll(".day");
+    selectedDays.forEach(day => day.classList.remove("selected"));
+    
+    const selectedDay = document.querySelector(`[data-day="${day}"]`);
+    selectedDay.classList.add("selected");
+
+    document.getElementById("searchDate").value = dateStr;
+  }
+
+  function searchDate() {
+    const searchInput = document.getElementById("searchDate").value;
+    const searchDate = new Date(searchInput);
+
+    if (!searchInput) {
+      alert("Please select a date.");
+      return;
+    }
+
+    const currentDate = new Date();
+    const timeDifference = Math.abs(currentDate - searchDate);
+    const days = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
+    const weeks = Math.floor(days / 7);
+    const months = Math.floor(days / 30.44);
+    const years = Math.floor(days / 365);
+
+    const resultText = `
+      Difference from today:
+      <br>Days: ${days} 
+      <br>Weeks: ${weeks} 
+      <br>Months: ${months} 
+      <br>Years: ${years}
+    `;
+
+    document.getElementById("searchResults").innerHTML = resultText;
+  }
+
+  renderCalendar();
+  displayCurrentDate();
+</script>
+
+</body>
+</html>
