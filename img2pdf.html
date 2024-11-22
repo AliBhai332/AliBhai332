@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo to PDF Converter</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #e9ecef 0%, #ffffff 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+            padding: 40px 30px;
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 25px;
+            font-size: 28px;
+            font-weight: 700;
+            color: #007bff;
+        }
+
+        input[type="file"] {
+            margin-bottom: 20px;
+            padding: 12px;
+            border: 2px solid #007bff;
+            border-radius: 5px;
+            width: 100%;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            background-color: #f8f9fa;
+        }
+
+        input[type="file"]:hover {
+            border-color: #0056b3;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 12px 18px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            width: 100%;
+            margin-top: 10px;
+            font-weight: 600;
+            box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
+        }
+
+        button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 123, 255, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 24px;
+            }
+
+            button {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Photo to PDF Converter</h1>
+        <input type="file" id="fileInput" accept="image/*" multiple>
+        <button id="convertBtn">Convert to PDF</button>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        document.getElementById("convertBtn").addEventListener("click", function() {
+            const fileInput = document.getElementById("fileInput");
+            const files = fileInput.files;
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF();
+
+            if (files.length === 0) {
+                alert("Please select at least one image.");
+                return;
+            }
+
+            let imgCount = 0;
+            Array.from(files).forEach((file) => {
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    const imgData = e.target.result;
+
+                    // Add image to PDF
+                    pdf.addImage(imgData, 'JPEG', 10, 10, 190, 0); // Adjust dimensions as needed
+
+                    imgCount++;
+
+                    // Add a new page for the next image if there are more images
+                    if (imgCount < files.length) {
+                        pdf.addPage();
+                    } else {
+                        // Save the PDF
+                        pdf.save("converted.pdf");
+                    }
+                };
+
+                reader.readAsDataURL(file);
+            });
+        });
+    </script>
+</body>
+</html>
