@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CV/Resume Maker</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .top-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .top-section h3 {
+            margin: 0;
+            font-size: 30px; /* Larger name */
+        }
+
+        .top-section img {
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+        }
+
+        .personal-info, .education-section, .experience-section, .skills-section {
+            margin-top: 20px;
+        }
+
+        .personal-info p, .education-section p, .experience-section p, .skills-section p {
+            margin: 5px 0;
+            font-size: 14px; /* Smaller text */
+        }
+
+        .experience-bar, .skill-bar {
+            width: 100%;
+            height: 8px;
+            border-radius: 10px;
+            margin-top: 5px;
+        }
+
+        .experience-bar span, .skill-bar span {
+            display: block;
+            height: 100%;
+            border-radius: 10px;
+        }
+
+        .experience-bar span.low {
+            background-color: #f44336;
+        }
+
+        .experience-bar span.medium {
+            background-color: #ff9800;
+        }
+
+        .experience-bar span.high {
+            background-color: #4caf50;
+        }
+
+        .skill-bar span {
+            background-color: #4caf50;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        textarea {
+            height: 100px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            display: block;
+            margin: 20px auto;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #cv-output {
+            margin-top: 30px;
+            text-align: left;
+        }
+
+        #cv {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        hr {
+            border: 0;
+            border-top: 1px solid #ddd;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>CV/Resume Maker</h1>
+        <form id="resume-form">
+            <div class="section">
+                <h2>Personal Information</h2>
+                <label for="name">Full Name</label>
+                <input type="text" id="name" placeholder="Enter your full name" required>
+                
+                <label for="father-name">Father's Name</label>
+                <input type="text" id="father-name" placeholder="Enter your father's name" required>
+                
+                <label for="cnic">CNIC</label>
+                <input type="text" id="cnic" placeholder="Enter your CNIC number" required>
+                
+                <label for="email">Email</label>
+                <input type="email" id="email" placeholder="Enter your email" required>
+                
+                <label for="phone">Phone</label>
+                <input type="text" id="phone" placeholder="Enter your phone number">
+            </div>
+
+            <hr>
+
+            <div class="section">
+                <h2>Education</h2>
+                <label for="degree">Degree</label>
+                <input type="text" id="degree" placeholder="Enter your degree" required>
+                
+                <label for="college-university">College/University</label>
+                <input type="text" id="college-university" placeholder="Enter college/university name" required>
+                
+                <label for="graduation-year">Year of Graduation</label>
+                <input type="text" id="graduation-year" placeholder="Enter graduation year" required>
+            </div>
+
+            <hr>
+
+            <div class="section" id="experience-section">
+                <h2>Experience</h2>
+                <div id="experience-fields"></div>
+                <button type="button" onclick="addExperience()">Add Experience</button>
+            </div>
+
+            <hr>
+
+            <div class="section">
+                <h2>Skills</h2>
+                <label for="skills">Skills (comma-separated)</label>
+                <input type="text" id="skills" placeholder="Enter skills, separated by commas" required>
+                <label for="skills-percentages">Skills Percentages (comma-separated)</label>
+                <input type="text" id="skills-percentages" placeholder="Enter skills percentages (0-100), separated by commas" required>
+            </div>
+
+            <div class="section">
+                <h2>Upload Photo</h2>
+                <label for="photo">Choose Photo</label>
+                <input type="file" id="photo" accept="image/*">
+            </div>
+
+            <button type="button" onclick="generateCV()">Generate CV</button>
+        </form>
+
+        <div id="cv-output" style="display:none;">
+            <h2>Your CV</h2>
+            <div id="cv"></div>
+            <button id="download-btn" onclick="downloadCV()">Download CV as PDF</button>
+        </div>
+    </div>
+
+    <script>
+        function addExperience() {
+            const experienceFields = document.getElementById("experience-fields");
+            const experienceDiv = document.createElement("div");
+            experienceDiv.classList.add("experience-item");
+
+            experienceDiv.innerHTML = `
+                <label for="job-title">Job Title</label>
+                <input type="text" class="job-title" placeholder="Enter job title">
+                
+                <label for="company">Company</label>
+                <input type="text" class="company" placeholder="Enter company name">
+                
+                <label for="start-year">Start Year</label>
+                <input type="text" class="start-year" placeholder="Enter start year">
+                
+                <label for="end-year">End Year</label>
+                <input type="text" class="end-year" placeholder="Enter end year">
+                
+                <label for="experience-percent">Experience Level (%)</label>
+                <input type="number" class="experience-percent" min="0" max="100" placeholder="Enter experience percentage">
+            `;
+
+            experienceFields.appendChild(experienceDiv);
+        }
+
+        function generateCV() {
+            const name = document.getElementById("name").value;
+            const fatherName = document.getElementById("father-name").value;
+            const cnic = document.getElementById("cnic").value;
+            const email = document.getElementById("email").value;
+            const phone = document.getElementById("phone").value;
+            const degree = document.getElementById("degree").value;
+            const collegeUniversity = document.getElementById("college-university").value;
+            const graduationYear = document.getElementById("graduation-year").value;
+            const skills = document.getElementById("skills").value;
+            const skillsPercentages = document.getElementById("skills-percentages").value.split(',');
+
+            let experiences = '';
+            const experienceSections = document.querySelectorAll('.experience-item');
+            experienceSections.forEach(function(section) {
+                const jobTitle = section.querySelector('.job-title').value;
+                const company = section.querySelector('.company').value;
+                const startYear = section.querySelector('.start-year').value;
+                const endYear = section.querySelector('.end-year').value;
+                const experiencePercent = section.querySelector('.experience-percent').value;
+                
+                experiences += `
+                                    <div class="experience-item">
+                                        <p><strong>${jobTitle}</strong> at <em>${company}</em> (${startYear} - ${endYear})</p>
+                                        <div class="experience-bar">
+                                            <span style="width: ${experiencePercent}%"></span>
+                                        </div>
+                                    </div>
+                                `;
+                });
+                
+                const photo = document.getElementById("photo").files[0] ? URL.createObjectURL(document.getElementById("photo").files[0]) : '';
+                
+                const cvContent = `
+                                <div class="top-section">
+                                    <div>
+                                        <h3>${name}</h3>
+                                    </div>
+                                    ${photo ? `<img src="${photo}" alt="Photo">` : ''}
+                                </div>
+                                <div class="personal-info">
+                                    <p><strong>Father's Name:</strong> ${fatherName}</p>
+                                    <p><strong>CNIC:</strong> ${cnic}</p>
+                                    <p><strong>Email:</strong> ${email}</p>
+                                    <p><strong>Phone:</strong> ${phone}</p>
+                                </div>
+                                <hr>
+                                <div class="education-section">
+                                    <h4>Education</h4>
+                                    <p><strong>Degree:</strong> ${degree}</p>
+                                    <p><strong>College/University:</strong> ${collegeUniversity}</p>
+                                    <p><strong>Graduation Year:</strong> ${graduationYear}</p>
+                                </div>
+                                <hr>
+                                <div class="experience-section">
+                                    <h4>Experience</h4>
+                                    ${experiences}
+                                </div>
+                                <hr>
+                                <div class="skills-section">
+                                    <h4>Skills</h4>
+                                    ${generateSkillsSection(skills, skillsPercentages)}
+                                </div>
+                            `;
+                
+                document.getElementById("cv").innerHTML = cvContent;
+                document.getElementById("cv-output").style.display = "block";
+                }
+                
+                function generateSkillsSection(skills, percentages) {
+                  const skillNames = skills.split(',');
+                  let skillsContent = '';
+                
+                  skillNames.forEach(function(skill, index) {
+                    const percentage = percentages[index] ? percentages[index].trim() : 0;
+                    skillsContent += `
+                                    <p><strong>${skill}</strong> - ${percentage}%</p>
+                                    <div class="skill-bar">
+                                        <span style="width: ${percentage}%"></span>
+                                    </div>
+                                `;
+                  });
+                
+                  return skillsContent;
+                }
+                
+                function downloadCV() {
+                  const { jsPDF } = window.jspdf;
+                  const doc = new jsPDF();
+                  const cvContent = document.getElementById("cv").innerHTML;
+                
+                  doc.html(cvContent, {
+                    callback: function(doc) {
+                      doc.save('resume.pdf');
+                    },
+                    x: 10,
+                    y: 10
+                  });
+                }
+                </script>
+                </body>
+                </html>
