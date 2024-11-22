@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoicing Software</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .invoice-form {
+            margin-bottom: 20px;
+        }
+        .invoice-form label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+        .invoice-form input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+        .invoice-form button {
+            padding: 10px 20px;
+            background-color: blue;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .invoice-output {
+            border: 1px solid #ccc;
+            padding: 20px;
+            display: auto;
+        }
+        .invoice-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .invoice-header .title {
+            font-size: 24px;
+            color: blue;
+            font-weight: bold;
+        }
+        .invoice-header .logo img {
+            width: 100px;
+        }
+        .invoice-description {
+            background-color: lightgreen;
+            padding: 10px;
+            margin-bottom: 20px;
+            font-size: 12px;
+            text-align: center;
+        }
+        .invoice-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .invoice-table th, .invoice-table td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+        .invoice-summary {
+            display: flex;
+            justify-content: space-between;
+        }
+        .invoice-summary .right {
+            text-align: right;
+        }
+        #downloadButton {
+            padding: 10px 20px;
+            background-color: green;
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: none;
+            margin-top: 10px;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js" integrity="sha512-MpDFIChbcXl2QgipQrt1VcPHMldRILetapBl5MPCA9Y8r7qvlwx1/Mc9hNTzY+kS5kX6PdoDq41ws1HiVNLdZA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+<body>
+    <div class="invoice-form">
+        <h2>Create Invoice</h2>
+        <label for="customerName">Customer Name:</label>
+        <input type="text" id="customerName" required>
+        <label for="invoiceDate">Date:</label>
+        <input type="date" id="invoiceDate" required>
+        <label for="paidAmount">Paid Amount:</label>
+        <input type="number" id="paidAmount" required>
+        <div id="items">
+            <div class="item">
+                <label for="itemDescription">Item Description:</label>
+                <input type="text" class="itemDescription" required>
+                <label for="quantity">Quantity:</label>
+                <input type="number" class="quantity" required>
+                <label for="unitPrice">Unit Price:</label>
+                <input type="number" class="unitPrice" required>
+            </div>
+        </div>
+        <button onclick="addItem()">Add Item</button>
+        <button onclick="createInvoice()">Create Invoice</button>
+    </div>
+    <div id="invoice-output" class="invoice-output"></div>
+    <button id="downloadButton" onclick="downloadInvoice()">Download Invoice</button>
+    <script>
+        function addItem() {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'item';
+            itemDiv.innerHTML = `
+                <label for="itemDescription">Item Description:</label>
+                <input type="text" class="itemDescription" required>
+                <label for="quantity">Quantity:</label>
+                <input type="number" class="quantity" required>
+                <label for="unitPrice">Unit Price:</label>
+                <input type="number" class="unitPrice" required>
+            `;
+            document.getElementById('items').appendChild(itemDiv);
+        }
+
+        function createInvoice() {
+            const customerName = document.getElementById('customerName').value;
+            const invoiceDate = document.getElementById('invoiceDate').value;
+            const paidAmount = parseFloat(document.getElementById('paidAmount').value);
+
+            const itemDescriptions = document.querySelectorAll('.itemDescription');
+            const quantities = document.querySelectorAll('.quantity');
+            const unitPrices = document.querySelectorAll('.unitPrice');
+
+            let items = '';
+            let subtotal = 0;
+
+            for (let i = 0; i < itemDescriptions.length; i++) {
+                const description = itemDescriptions[i].value;
+                const quantity = parseFloat(quantities[i].value);
+                const unitPrice = parseFloat(unitPrices[i].value);
+                const amount = quantity * unitPrice;
+
+                items += `
+                    <tr>
+                        <td>${description}</td>
+                        <td>${quantity}</td>
+                        <td>${unitPrice.toFixed(2)}</td>
+                        <td>${amount.toFixed(2)}</td>
+                    </tr>
+                `;
+
+                subtotal += amount;
+            }
+
+            const payableTotal = subtotal - paidAmount;
+
+            const invoiceOutput = `
+                <div id="invoice-content">
+                    <div class="invoice-header">
+                        <div class="title">Mian Cool Point</div>
+                        <div class="logo"><img src="https://lh5.googleusercontent.com/fJHQBmQuIsU92nA89ZTZz4CfKIYLfH0kUjEPT6Zdz17amy7XxZqBH4xNtBR9NtZ-2kuv4wiIIDYqaRknBxkrXQ=w16383" alt="Logo"></div>
+                    </div>
+                    <div class="invoice-description">
+                        Fridge, AC repairing, electric motor winding, and control panel work done satisfactorily by us.
+                    </div>
+                    <div>Customer Name: ${customerName}</div>
+                    <div>Date: ${invoiceDate}</div>
+                    <table class="invoice-table">
+                        <tr>
+                            <th>Description</th>
+                            <th>Quantity</th>
+                            <th>Unit Price</th>
+                            <th>Amount</th>
+                        </tr>
+                        ${items}
+                    </table>
+                    <div class="invoice-summary">
+                        <div>
+                            <div>Business Email: mianmuhammadramzanelc@gmail.com</div>
+                            <div>Phone Number: 0300-4980854</div>
+                            <div>Address: Thokar Niaz Baig, Lahore</div>
+                            <div>Website: www.miancoolpoint.netlify.app</div>
+                        </div>
+                        <div class="right">
+                            <div>Subtotal: ${subtotal.toFixed(2)}</div>
+                            <div>Paid: ${paidAmount.toFixed(2)}</div>
+                            <div>Payable Total: ${payableTotal.toFixed(2)}</div>
+                            <div>Signature: <img src="data:image/png;base64,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" alt="Signature" style="width: 100px; height: auto;"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('invoice-output').innerHTML = invoiceOutput;
+            document.getElementById('invoice-output').style.display = 'block';
+            document.getElementById('downloadButton').style.display = 'block';
+        }
+
+        function downloadInvoice() {
+            const element = document.getElementById('invoice-content');
+            html2pdf().from(element).save('invoice.pdf');
+        }
+    </script>
+</body>
+</html>
