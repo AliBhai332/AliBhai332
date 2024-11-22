@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flappy Bird</title>
+<style>
+  body, html {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+    background-image: url('background.jpg'); /* Replace 'background.jpg' with your image path */
+    background-size: cover;
+    background-position: center;
+  }
+
+  canvas {
+    display: block;
+    margin: 0 auto;
+    width: 100%;
+    height: calc(100% - 90px); /* Subtract 90px for the score and speed control bars */
+    border: 1px solid black;
+  }
+
+  #startButton {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #3498db;
+    color: #fff;
+    border: 2px solid transparent;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  #startButton:hover {
+    border-color: #2980b9;
+  }
+
+  #scoreDisplay, #highScoreDisplay, #speedPercentageDisplay {
+    position: fixed;
+    top: 0;
+    padding: 10px;
+    font-size: 18px;
+    font-weight: bold;
+  }
+
+  #scoreDisplay {
+    left: 10px;
+  }
+
+  #highScoreDisplay {
+    right: 10px;
+  }
+
+  #speedPercentageDisplay {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  #speedControl {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    padding: 10px;
+    background-color: #f0f0f0;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+<button id="startButton">Start Game</button>
+<div id="scoreDisplay">Score: 0</div>
+<div id="highScoreDisplay">High Score: 0</div>
+<div id="speedPercentageDisplay">Speed: 50%</div>
+
+<div id="speedControl">
+  Speed:
+  <input type="range" id="speedRange" min="1" max="10" value="5">
+</div>
+
+<input type="file" accept="image/*" id="birdInput">
+
+<script>
+  const canvas = document.getElementById("gameCanvas");
+  const ctx = canvas.getContext("2d");
+
+  // Set canvas width and height to device width and height
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight - 90; // Adjust for the score and speed control bar heights
+
+  let birdImg = new Image();
+  birdImg.src = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRHLMQcSAGVtOsiB66lJpQ4puqcrmPOygPn6ZSgRudvOw&s"; // Default bird image path
+
+  let bird = {
+    x: 50,
+    y: canvas.height / 2,
+    width: 40,
+    height: 30,
+    gravity: 0.5,
+    velocity: 0
+  };
+
+  let pipes = [];
+  const pipeWidth = 50;
+  const pipeGap = 250;
+  let pipeSpeed = 2;
+  const pipeFrequency = 100;
+
+  let score = 0;
+  let highScore = 0;
+
+  function drawBird() {
+    ctx.save(); // Save the current drawing state
+    ctx.beginPath(); // Begin a new path
+    ctx.arc(bird.x + bird.width / 2, bird.y + bird.height / 2, bird.width / 2, 0, Math.PI * 2); // Define a circular clipping region
+    ctx.closePath(); // Close the path
+    ctx.clip(); // Clip the region
+    ctx.drawImage(birdImg, bird.x, bird.y, bird.width, bird.height); // Draw the image within the clipping region
+    ctx.restore(); // Restore the drawing state
+  }
+
+  function drawPipes() {
+    ctx.fillStyle = "red";
+    ctx.fillRect(0, canvas.height - 10, canvas.width, 10);
+
+    pipes.forEach(pipe => {
+        const gradient = ctx.createLinearGradient(pipe.x, 0, pipe.x + pipeWidth, 0);
+        gradient.addColorStop(0, "#4CAF50");
+        gradient.addColorStop(0.5, "#8BC34A");
+        gradient.addColorStop(1, "#4CAF50");
+
+        ctx.fillStyle = gradient;
+        ctx.fillRect(pipe.x, 0, pipeWidth, pipe.top);
+        ctx.fillRect(pipe.x, pipe.top + pipeGap, pipeWidth, canvas.height - pipe.top - pipeGap);
+        
+        // Draw photo on pipes
+        ctx.drawImage(pipe.img, pipe.x, 0, pipeWidth, pipe.top);
+        ctx.drawImage(pipe.img, pipe.x, pipe.top + pipeGap, pipeWidth, canvas.height - pipe.top - pipeGap);
+    });
+  }
+
+  function moveBird() {
+    bird.velocity += bird.gravity;
+    bird.y += bird.velocity;
+  }
+
+  function movePipes() {
+    pipes.forEach(pipe => {
+      pipe.x -= pipeSpeed;
+    });
+
+    if (pipes.length > 0 && pipes[0].x + pipeWidth < 0) {
+      pipes.shift();
+      score++;
+      updateScore();
+    }
+  }
+
+  function generatePipes() {
+    if (frameCount % pipeFrequency === 0) {
+      const topPipeHeight = Math.random() * (canvas.height - pipeGap - 100) + 50;
+      const newPipe = {
+        x: canvas.width,
+        top: topPipeHeight,
+        img: new Image() // Create a new image object for the pipe photo
+      };
+      newPipe.img.src = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRzg4QJ6IuiGWbmmlpIyt5oigCNP2fi1hj3PO8KN3wKVw&s"; // Replace 'pipe_photo.png' with the path to your pipe photo
+      pipes.push(newPipe);
+    }
+  }
+
+  function collisionDetection() {
+    if (bird.y - bird.height / 2 <= 0 || bird.y + bird.height / 2 >= canvas.height) {
+      gameOver();
+    }
+
+    pipes.forEach(pipe => {
+      if (
+        bird.x + bird.width / 2 > pipe.x &&
+        bird.x - bird.width / 2 < pipe.x + pipeWidth &&
+        (bird.y - bird.height / 2 < pipe.top || bird.y + bird.height / 2 > pipe.top + pipeGap)
+      ) {
+        gameOver();
+      }
+    });
+  }
+
+  function gameOver() {
+    if (score > highScore) {
+      highScore = score;
+      updateHighScore();
+    }
+    alert("Game Over! Score: " + score);
+    resetGame();
+  }
+
+  function resetGame() {
+    bird.y = canvas.height / 2;
+    bird.velocity = 0;
+    pipes = [];
+    frameCount = 0;
+    gameStarted = false;
+    score = 0;
+    updateScore();
+    document.getElementById("startButton").style.display = "block";
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  function updateScore() {
+    document.getElementById("scoreDisplay").textContent = "Score: " + score;
+  }
+
+  function updateHighScore() {
+    document.getElementById("highScoreDisplay").textContent = "High Score: " + highScore;
+  }
+
+  let frameCount = 0;
+  let gameStarted = false;
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (gameStarted) {
+      moveBird();
+      movePipes();
+      generatePipes();
+      drawBird();
+      drawPipes();
+      collisionDetection();
+      frameCount++;
+      requestAnimationFrame(draw);
+    }
+  }
+
+  document.getElementById("startButton").addEventListener("click", () => {
+    gameStarted = true;
+    draw();
+    document.getElementById("startButton").style.display = "none";
+  });
+
+  canvas.addEventListener("click", () => {
+    bird.velocity = -10;
+  });
+
+  const speedRange = document.getElementById("speedRange");
+  const speedPercentageDisplay = document.getElementById("speedPercentageDisplay");
+  speedRange.addEventListener("input", () => {
+    pipeSpeed = parseInt(speedRange.value);
+    speedPercentageDisplay.textContent = "Speed: " + (speedRange.value * 10) + "%";
+  });
+
+  document.getElementById("birdInput").addEventListener("change", function(event) {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function() {
+        birdImg.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+</script>
+</body>
+</html>
