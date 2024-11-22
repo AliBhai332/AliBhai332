@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mind-Blowing 3D Torus Knot</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        let scene, camera, renderer, torusKnot;
+        let mouseX = 0, mouseY = 0;
+        
+        function init() {
+            // Create the scene and camera
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            
+            // Create the WebGL renderer
+            renderer = new THREE.WebGLRenderer();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+            
+            // Create a torus knot geometry
+            const geometry = new THREE.TorusKnotGeometry(10, 3, 100, 16);
+            const material = new THREE.ShaderMaterial({
+                vertexShader: `
+                    varying vec2 vUv;
+                    void main() {
+                        vUv = uv;
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    varying vec2 vUv;
+                    void main() {
+                        vec3 color = 0.5 + 0.5 * cos(3.0 + vUv.xyx + vec3(0,2,4));
+                        gl_FragColor = vec4(color, 1.0);
+                    }
+                `,
+                wireframe: true
+            });
+
+            torusKnot = new THREE.Mesh(geometry, material);
+            scene.add(torusKnot);
+
+            // Set the camera position
+            camera.position.z = 50;
+            
+            // Add mouse move event listener
+            document.addEventListener('mousemove', onMouseMove, false);
+
+            // Resize the canvas on window resize
+            window.addEventListener('resize', onWindowResize, false);
+            
+            animate();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Rotate the torus knot based on mouse position
+            torusKnot.rotation.x += 0.01;
+            torusKnot.rotation.y += 0.01;
+
+            // Update rotation based on mouse position
+            torusKnot.rotation.x += mouseY * 0.0005;
+            torusKnot.rotation.y += mouseX * 0.0005;
+
+            // Render the scene from the perspective of the camera
+            renderer.render(scene, camera);
+        }
+
+        function onMouseMove(event) {
+            mouseX = (event.clientX / window.innerWidth) * 2 - 1;
+            mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        init();
+    </script>
+</body>
+</html>
